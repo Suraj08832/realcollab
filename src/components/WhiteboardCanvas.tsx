@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Box, Button, IconButton, Paper, Stack, Typography, Tooltip, Zoom } from '@mui/material';
 import { Brush, Clear, Edit, CircleOutlined, PanTool, ZoomIn, ZoomOut, Save, Undo, Redo, FormatColorFill } from '@mui/icons-material';
 import { useSocket } from '../context/SocketContext';
@@ -48,10 +48,24 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({ roomId }) => {
   const [tool, setTool] = useState<ToolType>('brush');
   const [canvasOffset, setCanvasOffset] = useState<Point>({ x: 0, y: 0 });
   const [scale, setScale] = useState<number>(1);
-  const [position, setPosition] = useState<Point>({ x: 0, y: 0 });
   const [startPan, setStartPan] = useState<Point | null>(null);
   const [history, setHistory] = useState<Line[][]>([]);
   const [redoStack, setRedoStack] = useState<Line[][]>([]);
+
+  // Redraw all lines on the canvas
+  const redrawCanvas = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    whiteboardData.lines.forEach(line => {
+      drawLine(line);
+    });
+  }, [whiteboardData.lines]);
 
   // Set up canvas and handle window resize
   useEffect(() => {
@@ -74,7 +88,7 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({ roomId }) => {
     return () => {
       window.removeEventListener('resize', resizeCanvas);
     };
-  }, [whiteboardData]);
+  }, [redrawCanvas]);
 
   // Handle socket connection and events
   useEffect(() => {
@@ -195,21 +209,6 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({ roomId }) => {
     ctx.stroke();
   };
 
-  // Redraw all lines on the canvas
-  const redrawCanvas = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    whiteboardData.lines.forEach(line => {
-      drawLine(line);
-    });
-  };
-
   // Clear the whiteboard
   const clearCanvas = () => {
     if (!socket || !connected) return;
@@ -322,7 +321,6 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({ roomId }) => {
     const y = e.clientY - rect.top;
     
     // Update cursor position and send to server
-    setPosition({ x, y });
     socket.emit('cursorPosition', {
       roomId,
       position: { x, y }

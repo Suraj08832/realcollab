@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import './App.css';
 import { Box, Button, Container, AppBar, Toolbar, Typography, Card, CardContent, CardActions, Modal, TextField, Tabs, Tab, Paper, IconButton, List, ListItem, ListItemText, CircularProgress, Divider } from '@mui/material';
-import { Grid } from '@mui/material';
 import { Close, Add, MusicNote, Timer, CheckCircle, Edit, VideoCall, Message, Dashboard, Timeline, NoteAlt } from '@mui/icons-material';
 import WhiteboardCanvas from './components/WhiteboardCanvas';
 
